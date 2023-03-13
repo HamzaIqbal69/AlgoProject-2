@@ -6,36 +6,14 @@
 * Purpose         : Reads in a puzzle of more from a files and solves them
 * Usage			  : g++ SudokuBoard.cpp -o output
 *				  : ./output    (No Makefile required)
- ****************************************************************************/
-#include <iostream>
-#include <cstdlib>
-#include "d_matrix.h"
-#include <fstream>
-#include <iostream>
-#include <string>
-using namespace std;
+******************************************************************************
 
-const int Blank = 0;  		// Indicates that a cell is blank
-const int SquareSize = 3;	// Size of small squares
 
-/*
-*  	class SudokuBoard to solve sudoku puzzles
-*   The class is incomplete
-*/
-class SudokuBoard {
-  private:
-	int boardSize;			// Size of the board
-	matrix<int> sdkMatrix;	// Sudoku Matrix 
-	
-  public:
-	SudokuBoard(int N = 9);		// Constructor
-	void clearBoard();	
-	void initializeBoard(ifstream &fin);
-	bool solveSudoku();
-	void printSudoku();
-};
 
 /* Constructor to initialize data */
+
+#include "SudokuBoard.h"
+
 SudokuBoard::SudokuBoard(int N) : boardSize(N)
 {	
 	// Resize conflict matricies
@@ -104,7 +82,7 @@ void SudokuBoard::printSudoku()
 		cout << endl;
 	}
 	cout << " -";
-	for (int j = 1; j <= boardSize; j++)
+	for(int j = 1; j <= boardSize; j++)
 		cout << "---";
 	cout << "-";
 	cout << endl;
