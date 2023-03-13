@@ -6,14 +6,36 @@
 * Purpose         : Reads in a puzzle of more from a files and solves them
 * Usage			  : g++ SudokuBoard.cpp -o output
 *				  : ./output    (No Makefile required)
-******************************************************************************
+ ****************************************************************************/
+#include <iostream>
+#include <cstdlib>
+#include "d_matrix-1.h"
+#include <fstream>
+#include <iostream>
+#include <string>
+using namespace std;
 
+const int Blank = 0;  		// Indicates that a cell is blank
+const int SquareSize = 3;	// Size of small squares
 
+/*
+*  	class SudokuBoard to solve sudoku puzzles
+*   The class is incomplete
+*/
+class SudokuBoard {
+  private:
+	int boardSize;			// Size of the board
+	matrix<int> sdkMatrix;	// Sudoku Matrix 
+	
+  public:
+	SudokuBoard(int N = 9);		// Constructor
+	void clearBoard();	
+	void initializeBoard(ifstream &fin);
+	bool solveSudoku();
+	void printSudoku();
+};
 
 /* Constructor to initialize data */
-
-#include "SudokuBoard.h"
-
 SudokuBoard::SudokuBoard(int N) : boardSize(N)
 {	
 	// Resize conflict matricies
@@ -82,7 +104,7 @@ void SudokuBoard::printSudoku()
 		cout << endl;
 	}
 	cout << " -";
-	for(int j = 1; j <= boardSize; j++)
+	for (int j = 1; j <= boardSize; j++)
 		cout << "---";
 	cout << "-";
 	cout << endl;
@@ -91,7 +113,8 @@ void SudokuBoard::printSudoku()
 /*
 *  	main() function to solve sudoku puzzles from a file
 */
-int main() {
+int main() 
+{
 	int recursiveCount;		// # of recursive calls
 	int backtracksCount;	// # of backtracks involved for each board
 	int boardCount = 0; 	// # of Boards from file solved
@@ -102,7 +125,7 @@ int main() {
 	
 	// Open the data file and verify it opens successfully
 	ifstream fin;
-	fin.open("sudoku1.txt");
+	fin.open("Sudoku3Puzzles.txt");
 	if (!fin)
 	{
 		cerr << "Cannot open 'sudoku1.txt'" << endl;
@@ -120,6 +143,8 @@ int main() {
 		// Print sudoku
 		cout <<"\n*****  NEW SUDOKU PUZZLE... ******"  << endl;
 		sdk->printSudoku(); // print the board on the terminal
+
+		
 		// ********  Evaluate and print conflicts *****
 
 		// If found, print out the resulting solution and final conflicts
