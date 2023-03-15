@@ -30,9 +30,12 @@ class SudokuBoard
 	matrix<bool> row_conflicts;
 	matrix<bool> col_conflicts;
 	matrix<bool> sqr_conflicts;
+	vector<vector<int>> available;
 	int calcSquare(int row, int col);
-	void updateConflicts(int row, int col, int val);
-	int* SudokuBoard::nextAvailable();
+	void insertionUpdate(int row, int col, int val);
+	int* bestAvailable();
+	int calcNumConstraint(int row, int col);
+	bool isValidPlacement(int row, int col);
 	
   public:
 	SudokuBoard(int N = 9);		// Constructor
@@ -77,6 +80,10 @@ void SudokuBoard::initializeBoard(ifstream &fin)
 				col_conflicts[j][digit - 1] = 1;
 				sqr_conflicts[square][digit - 1] = 1;
 		  	}
+			else
+			{
+				available.push_back({i, j});
+			}
         }
    }
 }
@@ -139,40 +146,71 @@ void SudokuBoard::clearBoard()
 
 
 // Updates the conflict vectors given the index and the inserted value
-void SudokuBoard::updateConflicts(int row, int col, int val)
+void SudokuBoard::insertionUpdate(int row, int col, int val)
 {
 	int sqr = calcSquare(row, col);
+	vector<int> target = {row, col};
 	row_conflicts[row][val - 1] = 1;
 	col_conflicts[col][val - 1] = 1;
 	sqr_conflicts[sqr][val - 1] = 1;
-}
-
-// Looks through the matrix for places spots that are not filled and compares to conflict vectors
-// Returns the index in the first two indices and the first available number in the 3rd index
-int* SudokuBoard::nextAvailable()
-{
-	int nextIndexNum[3];
-	for(int i = 0; i < boardSize; i++)
+	for(int i = 0; i < available.size(); i++)
 	{
-		for(int j = 0; j < boardSize; j++)
+		if(available[i] == target)
 		{
-			if(sdkMatrix[i][j] == 0)
-			{
-				for(int num = 1; num < 10; num++)
-				{
-					int sqr = calcSquare(i, j);
-					if((row_conflicts[i][num] == 0) && (col_conflicts[j][num] == 0) && (sqr_conflicts[sqr][num] == 0))
-					{
-						nextIndexNum[0] = i;
-						nextIndexNum[1] = j;
-						nextIndexNum[2] = num;
-						return nextIndexNum;
-					}
-				}
-			}
+			available.erase(available.begin() + i);
 		}
 	}
-	return nullptr;
+}
+
+
+// Looks through the matrix and finds the most constrained available index
+int* SudokuBoard::bestAvailable()
+{
+	int bestIndex[2];
+	int maxConstraint = 0;
+	if(available.size() ==  0)
+	{
+		return nullptr;
+	}
+	for(int i = 0; i < available.size(); i++)
+	{
+		int numConstraints = calcNumConstraint(available[i][0], available[i][1]);
+		if(numConstraints > maxConstraint)
+		{
+			bestIndex[0] = available[i][0];
+			bestIndex[1] = available[i][1];
+		}
+	}
+	return bestIndex;
+}
+
+
+// Finds the number of constraints on a given cell
+int SudokuBoard::calcNumConstraint(int row, int col)
+{
+	int num_constraints = 0;
+	int sqr = calcSquare(row, col);
+	for(int i = 0; i < boardSize; i++)
+	{
+		num_constraints += row_conflicts[row][i] + col_conflicts[col][i] + sqr_conflicts[sqr][i];
+	}
+	return num_constraints;
+}
+
+
+// Determines if a placement is valid
+bool SudokuBoard::isValidPlacement(int row, int col)
+{
+	bool valid = false;
+	int sqr = calcSquare(row, col);
+	for(int i = 0; i < boardSize; i++)
+	{
+		if((row_conflicts[row][i] ==  0) && (col_conflicts[col][i] == 0) && (sqr_conflicts[sqr][i] == 0))
+		{
+			valid = true;
+		}
+	}
+	return valid;
 }
 
 
