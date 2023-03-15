@@ -36,6 +36,7 @@ class SudokuBoard
 	int* bestAvailable();
 	int calcNumConstraint(int row, int col);
 	bool isValidPlacement(int row, int col);
+	bool isBoardDone();
 	
   public:
 	SudokuBoard(int N = 9);		// Constructor
@@ -211,6 +212,27 @@ bool SudokuBoard::isValidPlacement(int row, int col)
 		}
 	}
 	return valid;
+}
+
+
+// Determines if board is solved or unsolvable
+bool SudokuBoard::isBoardDone()
+{
+	if(available.size() == 0)
+	{
+		return true;
+	}
+	else
+	{
+		for(int i = 0; i < available.size(); i++)
+		{
+			if(isValidPlacement(available[i][0], available[i][1]))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 }
 
 
