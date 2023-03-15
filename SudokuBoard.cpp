@@ -32,6 +32,7 @@ class SudokuBoard
 	matrix<bool> sqr_conflicts;
 	int calcSquare(int row, int col);
 	void updateConflicts(int row, int col, int val);
+	int* SudokuBoard::nextAvailable();
 	
   public:
 	SudokuBoard(int N = 9);		// Constructor
@@ -144,6 +145,34 @@ void SudokuBoard::updateConflicts(int row, int col, int val)
 	row_conflicts[row][val - 1] = 1;
 	col_conflicts[col][val - 1] = 1;
 	sqr_conflicts[sqr][val - 1] = 1;
+}
+
+// Looks through the matrix for places spots that are not filled and compares to conflict vectors
+// Returns the index in the first two indices and the first available number in the 3rd index
+int* SudokuBoard::nextAvailable()
+{
+	int nextIndexNum[3];
+	for(int i = 0; i < boardSize; i++)
+	{
+		for(int j = 0; j < boardSize; j++)
+		{
+			if(sdkMatrix[i][j] == 0)
+			{
+				for(int num = 1; num < 10; num++)
+				{
+					int sqr = calcSquare(i, j);
+					if((row_conflicts[i][num] == 0) && (col_conflicts[j][num] == 0) && (sqr_conflicts[sqr][num] == 0))
+					{
+						nextIndexNum[0] = i;
+						nextIndexNum[1] = j;
+						nextIndexNum[2] = num;
+						return nextIndexNum;
+					}
+				}
+			}
+		}
+	}
+	return nullptr;
 }
 
 
