@@ -246,28 +246,31 @@ bool SudokuBoard::isBoardDone()
 /* Recursive function to solve the sudoku puzzle.  */
 bool SudokuBoard::solveSudoku() 
 {
-	//***** To be completed ************
-	// returns true if solution found, otherwise, false
 	if(isBoardDone() and available.size() > 0)
 	{
 		return false;
 	}
 	int* next;
 	next = bestAvailable();
+	int sqr = calcSquare(next[0], next[1]);
 	if(isValidPlacement(next[0], next[1]))
 	{
 		for(int i = 0; i < boardSize; i++)
 		{
-			sdkMatrix[next[0]][next[1]] = i + 1;
-			solveSudoku();
+			if((row_conflicts[next[0]][i] == 0) && (col_conflicts[next[1]][i] ==  0) && (sqr_conflicts[sqr][i]))
+			{
+				sdkMatrix[next[0]][next[1]] = i + 1;
+				insertionUpdate(next[0], next[1], i + 1);
+				solveSudoku();
+			}
 		}
+		return true;
 	}
 	else
 	{
 		return false;
 	}
 	return true;
-	
 }
 
 
