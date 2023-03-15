@@ -25,26 +25,27 @@ const int SquareSize = 3;	// Size of small squares
 class SudokuBoard 
 {
   private:
-	int boardSize;			// Size of the board
-	matrix<int> sdkMatrix;	// Sudoku Matrix 
-	matrix<bool> row_conflicts;
-	matrix<bool> col_conflicts;
-	matrix<bool> sqr_conflicts;
-	vector<vector<int>> available;
-	int calcSquare(int row, int col);
-	void insertionUpdate(int row, int col, int val);
-	int* bestAvailable();
-	int calcNumConstraint(int row, int col);
-	bool isValidPlacement(int row, int col);
-	bool isBoardDone();
+	int boardSize;										// Size of the board
+	matrix<int> sdkMatrix;								// Sudoku Matrix 
+	matrix<bool> row_conflicts;							// Row Conflict Matrix
+	matrix<bool> col_conflicts;							// Column Conflict Matrix
+	matrix<bool> sqr_conflicts;							// Square Conflict Matrix
+	vector<vector<int> > available;						// Vector of available indices
+	int calcSquare(int row, int col);					// Calculates square based on idices
+	void insertionUpdate(int row, int col, int val);	// Updates conflicts and available on insertion
+	int* bestAvailable();								// Finds the most constrained cell
+	int calcNumConstraint(int row, int col);			// Finds the number of constraints on a cell
+	bool isValidPlacement(int row, int col);			// Determines if a placement is legal
+	bool isBoardDone();									// Checks whether the board is complete or unsolvable
 	
   public:
-	SudokuBoard(int N = 9);		// Constructor
-	void clearBoard();	
-	void initializeBoard(ifstream &fin);
-	bool solveSudoku();
-	void printSudoku();
+	SudokuBoard(int N = 9);								// Constructor
+	void clearBoard();									// Clears the board
+	void initializeBoard(ifstream &fin);				// Sets up the board based on a text file
+	bool solveSudoku();									// Solves the board
+	void printSudoku();									// Prints the board
 };
+
 
 /* Constructor to initialize data */
 SudokuBoard::SudokuBoard(int N) : boardSize(N)
@@ -83,7 +84,10 @@ void SudokuBoard::initializeBoard(ifstream &fin)
 		  	}
 			else
 			{
-				available.push_back({i, j});
+				vector<int> index;
+				index.push_back(i);
+				index.push_back(j);
+				available.push_back(index);
 			}
         }
    }
@@ -150,7 +154,9 @@ void SudokuBoard::clearBoard()
 void SudokuBoard::insertionUpdate(int row, int col, int val)
 {
 	int sqr = calcSquare(row, col);
-	vector<int> target = {row, col};
+	vector<int> target;
+	target.push_back(row);
+	target.push_back(col);
 	row_conflicts[row][val - 1] = 1;
 	col_conflicts[col][val - 1] = 1;
 	sqr_conflicts[sqr][val - 1] = 1;
@@ -182,7 +188,8 @@ int* SudokuBoard::bestAvailable()
 			bestIndex[1] = available[i][1];
 		}
 	}
-	return bestIndex;
+	int* returnIndex = bestIndex;
+	return returnIndex;
 }
 
 
@@ -241,8 +248,26 @@ bool SudokuBoard::solveSudoku()
 {
 	//***** To be completed ************
 	// returns true if solution found, otherwise, false
+	if(isBoardDone() and available.size() > 0)
+	{
+		return false;
+	}
+	int* next;
+	next = bestAvailable();
+	if(isValidPlacement(next[0], next[1]))
+	{
+		for(int i = 0; i < boardSize; i++)
+		{
+			sdkMatrix[next[0]][next[1]] = i + 1;
+			solveSudoku();
+		}
+	}
+	else
+	{
+		return false;
+	}
+	return true;
 	
-    return false;
 }
 
 
