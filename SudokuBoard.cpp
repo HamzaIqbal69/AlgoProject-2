@@ -33,7 +33,7 @@ class SudokuBoard
 	vector<vector<int> > available;						// Vector of available indices
 	int calcSquare(int row, int col);					// Calculates square based on idices
 	void insertionUpdate(int row, int col, int val);	// Updates conflicts and available on insertion
-	int* bestAvailable();								// Finds the most constrained cell
+	vector<int> bestAvailable();						// Finds the most constrained cell
 	int calcNumConstraint(int row, int col);			// Finds the number of constraints on a cell
 	bool isValidPlacement(int row, int col);			// Determines if a placement is legal
 	bool isBoardDone();									// Checks whether the board is complete or unsolvable
@@ -97,41 +97,50 @@ void SudokuBoard::initializeBoard(ifstream &fin)
 //Calculates current square based on indices
 int SudokuBoard::calcSquare(int row, int col)
 {
-	if(row < SquareSize && col < SquareSize)
+	if(row < SquareSize)
 	{
-		return 0;
+		if(col < SquareSize)
+		{
+			return 0;
+		}
+		else if((col >= SquareSize) && (col < (SquareSize * 2)))
+		{
+			return 1;
+		}
+		else
+		{
+			return 2;
+		}
 	}
-	else if((col >= SquareSize) && (col < (2 * SquareSize)) && (row < SquareSize))
+	else if((row >= SquareSize) && (row < (SquareSize * 2)))
 	{
-		return 1;
+		if(col < SquareSize)
+		{
+			return 3;
+		}
+		else if((col >= SquareSize) && (col < (SquareSize * 2)))
+		{
+			return 4;
+		}
+		else
+		{
+			return 5;
+		}
 	}
-	else if((col >= SquareSize * 2) && (row < SquareSize))
+	else
 	{
-		return 2;
-	}
-	else if((col < SquareSize) && (row >= SquareSize) && (row < (2 * SquareSize)))
-	{
-		return 3;
-	}
-	else if((col >= SquareSize) && (col < (2 * SquareSize)) && (row >= SquareSize) && (row < (2 * SquareSize)))
-	{
-		return 4;
-	}
-	else if((col > SquareSize * 2) && (row >= SquareSize) && (row < (2 * SquareSize)))
-	{
-		return 5;
-	}
-	else if((col < SquareSize) && (row > (2 * SquareSize)))
-	{
-		return 6;
-	}
-	else if((col >= SquareSize) && (col < (2 * SquareSize)) && (row > (2 * SquareSize)))
-	{
-		return 7;
-	}
-	else if((col > SquareSize * 2) && (row > (2 * SquareSize)))
-	{
-		return 8;
+		if(col < SquareSize)
+		{
+			return 6;
+		}
+		else if((col >= SquareSize) && (col < (SquareSize * 2)))
+		{
+			return 7;
+		}
+		else
+		{
+			return 8;
+		}
 	}
 }
 
@@ -171,25 +180,29 @@ void SudokuBoard::insertionUpdate(int row, int col, int val)
 
 
 // Looks through the matrix and finds the most constrained available index
-int* SudokuBoard::bestAvailable()
+vector<int> SudokuBoard::bestAvailable()
 {
-	int bestIndex[2];
+	vector<int> bestIndex;
+	int numConstraints;
 	int maxConstraint = 0;
-	if(available.size() ==  0)
+	if(available.empty())
 	{
-		return nullptr;
+		return bestIndex;
 	}
-	for(int i = 0; i < available.size(); i++)
+	else
 	{
-		int numConstraints = calcNumConstraint(available[i][0], available[i][1]);
-		if(numConstraints > maxConstraint)
+		for(int i = 0; i < available.size(); i++)
 		{
-			bestIndex[0] = available[i][0];
-			bestIndex[1] = available[i][1];
+			numConstraints = calcNumConstraint(available[i][0], available[i][1]);
+			if(numConstraints > maxConstraint)
+			{
+				bestIndex.clear();
+				bestIndex.push_back(available[i][0]);
+				bestIndex.push_back(available[i][1]);
+			}
 		}
+		return bestIndex;
 	}
-	int* returnIndex = bestIndex;
-	return returnIndex;
 }
 
 
@@ -250,21 +263,21 @@ bool SudokuBoard::solveSudoku()
 	{
 		return false;
 	}
-	int* next;
-	next = bestAvailable();
-	int sqr = calcSquare(next[0], next[1]);
-	if(isValidPlacement(next[0], next[1]))
+	vector<int> index;
+	index = bestAvailable();
+	int sqr = calcSquare(index[0], index[1]);
+	if(isValidPlacement(index[0], index[1]))
 	{
 		for(int i = 0; i < boardSize; i++)
 		{
-			if((row_conflicts[next[0]][i] == 0) && (col_conflicts[next[1]][i] ==  0) && (sqr_conflicts[sqr][i]))
+			if((row_conflicts[index[0]][i] == 0) && (col_conflicts[index[1]][i] ==  0) && (sqr_conflicts[sqr][i]))
 			{
-				sdkMatrix[next[0]][next[1]] = i + 1;
-				insertionUpdate(next[0], next[1], i + 1);
+				sdkMatrix[index[0]][index[1]] = i + 1;
+				insertionUpdate(index[0], index[1], i + 1);
 				solveSudoku();
 			}
 		}
-		return true;
+		return false;
 	}
 	else
 	{
@@ -319,7 +332,7 @@ int main()
 	
 	// Open the data file and verify it opens successfully
 	ifstream fin;
-	fin.open("Sudoku3Puzzles.txt");
+	fin.open("Sudoku1.txt");
 	if (!fin)
 	{
 		cerr << "Cannot open 'sudoku1.txt'" << endl;
@@ -344,8 +357,9 @@ int main()
 		// If found, print out the resulting solution and final conflicts
 		if (sdk->solveSudoku()) {
 			// Print on the terminal
-			// cout << "\nComplete Solution Found." << endl;	
-			// cout << "\nCompleted board ..." << endl;
+			cout << "\nComplete Solution Found." << endl;	
+			cout << "\nCompleted board ..." << endl;
+			sdk->printSudoku();
 			/*  Print completed board */
 			/*  print the conflicts */
 			/*  print # of recursive calls */
