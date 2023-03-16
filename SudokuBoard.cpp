@@ -165,20 +165,32 @@ void SudokuBoard::clearBoard()
 // Updates the conflict vectors given the index and the inserted value
 void SudokuBoard::updateBoard(int row, int col, int val)
 {
+	int prevVal = sdkMatrix[row][col];
 	sdkMatrix[row][col] = val;
 	int sqr = calcSquare(row, col);
 	vector<int> target;
 	target.push_back(row);
 	target.push_back(col);
-	row_conflicts[row][val - 1] = 1;
-	col_conflicts[col][val - 1] = 1;
-	sqr_conflicts[sqr][val - 1] = 1;
-	for(int i = 0; i < available.size(); i++)
+	if(val != 0)
 	{
-		if(available[i] == target)
+		row_conflicts[row][val - 1] = 1;
+		col_conflicts[col][val - 1] = 1;
+		sqr_conflicts[sqr][val - 1] = 1;
+		for(int i = 0; i < available.size(); i++)
 		{
-			available.erase(available.begin() + i);
+			if(available[i] == target)
+			{
+				available.erase(available.begin() + i);
+			}
 		}
+	}
+	else
+	{
+		// theres a segmentation fault here
+		row_conflicts[row][prevVal - 1] = 0;
+		col_conflicts[col][prevVal - 1] = 0;
+		sqr_conflicts[sqr][prevVal - 1] = 0;
+		available.push_back(target);
 	}
 }
 
@@ -294,20 +306,16 @@ bool SudokuBoard::solveSudoku()
 		int row = index[0];
 		int col = index[1];
 		vector<int> numberChoices = validNums(row, col);
-		int ind = 0;
-		bool solved = false;
-		while(!solved)
+		for(int i = 0; i < numberChoices.size(); i++)
 		{
-			if(ind >= numberChoices.size())
+			if(sdkMatrix[row][col] != 0)
 			{
-				break;
+				updateBoard(row, col, 0);
 			}
-			updateBoard(row, col, numberChoices[ind]);
-			printSudoku();
-			solved = solveSudoku();
-			ind++;
+			updateBoard(row, col, numberChoices[i]);
+			// printSudoku();
+			return solveSudoku();
 		}
-		return false;
 	}
 }
 
@@ -392,8 +400,9 @@ int main()
 			
 			// If no solution found, print out the incomplete sudoku
 		} else {
-			// cout << "\nNo Solution Found...!" << endl;
-			// cout << "\nIncomplete board ..." << endl;
+			cout << "\nNo Solution Found...!" << endl;
+			cout << "\nIncomplete board ..." << endl;
+			sdk->printSudoku();
 			/*  Print incompleted board */		
 		}
 	}
