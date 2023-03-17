@@ -27,10 +27,9 @@ class SudokuBoard
   private:
 	int boardSize;												// Size of the board
 	matrix<int> sdkMatrix;										// Sudoku Matrix 
-	matrix<bool> row_conflicts;									// Row Conflict Matrix
-	matrix<bool> col_conflicts;									// Column Conflict Matrix
-	matrix<bool> sqr_conflicts;									// Square Conflict Matrix
-	vector<vector<int> > available;								// Vector of available indices
+	matrix<int> row_conflicts;									// Row Conflict Matrix
+	matrix<int> col_conflicts;									// Column Conflict Matrix
+	matrix<int> sqr_conflicts;									// Square Conflict Matrix
 	int calcSquare(int row, int col);							// Calculates square based on idices
 	void updateBoard(int row, int col, int val);			    // Updates conflicts and available on insertion
 	vector<int> bestAvailable();								// Finds the most constrained cell
@@ -38,6 +37,8 @@ class SudokuBoard
 	vector<int> validNums(int row, int col);					// Determines if a placement is legal
 	bool isBoardDone();											// Checks whether the board is complete or unsolvable
 	bool isValidCell(int row, int col);							// Checks whether anything can be placed at a cell
+	void addConflict(int row, int num, int val);
+
 
 
 	
@@ -55,9 +56,9 @@ SudokuBoard::SudokuBoard(int N) : boardSize(N)
 {	
 	// Resize conflict matricies
 	sdkMatrix.resize(N, N);
-	row_conflicts.resize(N,N);
-	col_conflicts.resize(N,N);
-	sqr_conflicts.resize(N,N);
+	row_conflicts.resize(N,boardSize);
+	col_conflicts.resize(N,boardSize);
+	sqr_conflicts.resize(N,boardSize);
 	clearBoard();
 }
 
@@ -72,7 +73,7 @@ void SudokuBoard::initializeBoard(ifstream &fin)
    // filling in sudoku board and inserting conflicts
    for (int i = 0; i < boardSize; i++)
    {
-      for (int j = 0; j < boardSize; j++)
+        for (int j = 0; j < boardSize; j++)
 	    {
 	        fin >> ch;
             // If the read char is not Blank
@@ -85,13 +86,6 @@ void SudokuBoard::initializeBoard(ifstream &fin)
 				col_conflicts[j][digit - 1] = 1;
 				sqr_conflicts[square][digit - 1] = 1;
 		  	}
-			else
-			{
-				vector<int> index;
-				index.push_back(i);
-				index.push_back(j);
-				available.push_back(index);
-			}
         }
    }
 }
@@ -168,29 +162,17 @@ void SudokuBoard::updateBoard(int row, int col, int val)
 	int prevVal = sdkMatrix[row][col];
 	sdkMatrix[row][col] = val;
 	int sqr = calcSquare(row, col);
-	vector<int> target;
-	target.push_back(row);
-	target.push_back(col);
 	if(val != 0)
 	{
 		row_conflicts[row][val - 1] = 1;
 		col_conflicts[col][val - 1] = 1;
 		sqr_conflicts[sqr][val - 1] = 1;
-		for(int i = 0; i < available.size(); i++)
-		{
-			if(available[i] == target)
-			{
-				available.erase(available.begin() + i);
-			}
-		}
 	}
 	else
 	{
-		// theres a segmentation fault here
 		row_conflicts[row][prevVal - 1] = 0;
 		col_conflicts[col][prevVal - 1] = 0;
 		sqr_conflicts[sqr][prevVal - 1] = 0;
-		available.push_back(target);
 	}
 }
 
@@ -199,26 +181,24 @@ void SudokuBoard::updateBoard(int row, int col, int val)
 vector<int> SudokuBoard::bestAvailable()
 {
 	vector<int> bestIndex;
+	bestIndex.push_back(0);
+	bestIndex.push_back(0);
 	int numConstraints;
 	int maxConstraint = 0;
-	if(available.empty())
+	for(int row = 0; row < boardSize; row++)
 	{
-		return bestIndex;
-	}
-	else
-	{
-		for(int i = 0; i < available.size(); i++)
+		for(int col = 0; col < boardSize; col++)
 		{
-			numConstraints = calcNumConstraint(available[i][0], available[i][1]);
+			numConstraints = calcNumConstraint(row, col);
 			if(numConstraints > maxConstraint)
 			{
 				bestIndex.clear();
-				bestIndex.push_back(available[i][0]);
-				bestIndex.push_back(available[i][1]);
+				bestIndex[0] = row;
+				bestIndex[1] = col;
 			}
 		}
-		return bestIndex;
 	}
+	return bestIndex;
 }
 
 
@@ -257,7 +237,7 @@ bool SudokuBoard::isValidCell(int row, int col)
 	int sqr = calcSquare(row, col);
 	for(int i = 0; i < boardSize; i++)
 	{
-		if((row_conflicts[row][i] ==  0) && (col_conflicts[col][i] == 0) && (sqr_conflicts[sqr][i] == 0))
+		if((row_conflicts[row][i] ==  0) && (col_conflicts[col][i] == 0) && (sqr_conflicts[sqr][i] == 0) && (sdkMatrix[row][col] == 0))
 		{
 			return true;
 		}
@@ -268,54 +248,93 @@ bool SudokuBoard::isValidCell(int row, int col)
 // Determines if board is solved or unsolvable
 bool SudokuBoard::isBoardDone()
 {
-	if(available.size() == 0)
+	for(int row = 0; row < boardSize; row++)
 	{
-		return true;
-	}
-	else
-	{
-		for(int i = 0; i < available.size(); i++)
+		for(int col = 0; col < boardSize; col++)
 		{
-			if(isValidCell(available[i][0], available[i][1]))
+			if(isValidCell(row, col))
 			{
 				return false;
 			}
 		}
-		return true;
 	}
+	return true;
 }
 
+void SudokuBoard::addConflict(int row, int col, int val)
+{
+	int sqr = calcSquare(row, col);
+	row_conflicts[row][val - 1] = 1;
+	col_conflicts[col][val - 1] = 1;
+	sqr_conflicts[sqr][val - 1] = 1;
+}
 
 /* Recursive function to solve the sudoku puzzle.  */
 bool SudokuBoard::solveSudoku() 
 {
+	cout << "8-- 1" << endl;
 	if(isBoardDone())
 	{
-		if(available.empty())
+		cout << "8-- 2" << endl;
+		for(int row = 0; row < boardSize; row++)
 		{
-			return true;
+			for(int col = 0; col < boardSize; col++)
+			{
+				cout << "8-- 3" << endl;
+				if(sdkMatrix[row][col] == 0)
+				{
+					cout << "8-- 4" << endl;
+					return false;
+				}
+			}
 		}
-		else
-		{
-			return false;
-		}
+		cout << "8-- 5" << endl;
+		return true;
 	}
 	else
 	{
+		cout << "8-- 6" << endl;
 		vector<int> index = bestAvailable();
+		cout << "8-- 7" << endl;
+		cout << index[0] << ", " << index[1] << endl;
 		int row = index[0];
 		int col = index[1];
 		vector<int> numberChoices = validNums(row, col);
+		cout << numberChoices.size() << endl;
+		cout << "8-- 8" << endl;
 		for(int i = 0; i < numberChoices.size(); i++)
 		{
-			if(sdkMatrix[row][col] != 0)
+			cout << "8-- 9" << endl;
+			if(isValidCell(row, col))
 			{
-				updateBoard(row, col, 0);
+				cout << "8-- 10" << endl;
+				updateBoard(row, col, numberChoices[i]);
+				cout << "8-- 11" << endl;
+				printSudoku();
+				addConflict(row, col, numberChoices[i]);
+				cout << "Pre Recursive Call" << endl;
+				bool valid = solveSudoku();
+				cout << "Post Recursive Call" << endl;
+				if(valid)
+				{
+					cout << "8-- 12" << endl;
+					return true;
+					cout << "8-- 13" << endl;
+				}
+				else
+				{
+					cout << "8-- 14" << endl;
+					if(sdkMatrix[row][col] != 0)
+					{
+						cout << "8-- 15" << endl;
+						updateBoard(row, col, 0);
+						printSudoku();
+					}
+					return solveSudoku();
+				}
 			}
-			updateBoard(row, col, numberChoices[i]);
-			// printSudoku();
-			return solveSudoku();
 		}
+		return false;
 	}
 }
 
