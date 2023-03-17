@@ -302,19 +302,24 @@ bool SudokuBoard::solveSudoku()
 	}
 	else
 	{
-		vector<int> index = bestAvailable();
-		int row = index[0];
-		int col = index[1];
-		vector<int> numberChoices = validNums(row, col);
-		for(int i = 0; i < numberChoices.size(); i++)
+		vector<int> cell = bestAvailable();
+		int row = cell[0];
+		int col = cell[1];
+		vector<int> legalNums = validNums(row, col);
+		for(int i = 0; i < legalNums.size(); i++)
 		{
-			if(sdkMatrix[row][col] != 0)
+			if(isValidCell(row, col))
 			{
-				updateBoard(row, col, 0);
+				updateBoard(row, col, legalNums[i]);
+				if(solveSudoku())
+				{
+					return true;
+				}
+				else
+				{
+					updateBoard(row, col, 0);
+				}
 			}
-			updateBoard(row, col, numberChoices[i]);
-			// printSudoku();
-			return solveSudoku();
 		}
 	}
 }
