@@ -47,6 +47,7 @@ class SudokuBoard
 	void initializeBoard(ifstream &fin);						// Sets up the board based on a text file
 	bool solveSudoku();											// Solves the board
 	void printSudoku();											// Prints the board
+	void WriteToFile(string unsolved);							//prints solved board to text file
 };
 
 
@@ -355,6 +356,53 @@ void SudokuBoard::printSudoku()
 	cout << endl;
 }
 
+
+
+void SudokuBoard:: WriteToFile(string unsolved_file){
+
+//use modified incomplete board file name to create file to store solution
+  string solved_file  = (unsolved_file.substr (0,unsolved_file.length()-4)) + "_solved.txt";
+
+// create file for solved sudoku
+  ofstream solved(solved_file.c_str());
+
+
+	for (int i = 1; i <= boardSize; i++)
+	{
+		if ((i-1) % SquareSize == 0)
+		{
+			for (int j = 1; j <= boardSize+1; j++)
+				solved << "---";
+			solved << endl << endl;
+		}
+		for (int j = 1; j < boardSize+1; j++)
+		{
+			if ((j-1) % SquareSize == 0)
+				solved << "|";
+			if (sdkMatrix[i-1][j-1] != Blank)
+				solved << " " << sdkMatrix[i-1][j-1] << " ";
+			else
+				solved << " - ";
+		}
+		solved << "|";
+		solved << endl << endl;
+	}
+	solved << " -";
+ 
+	for (int j = 1; j <= boardSize; j++){
+		solved << "---";}
+   
+	solved << "-";
+	solved << endl << endl;
+ 
+
+  
+  // Close the file
+  solved.close();
+}
+
+
+
 /*
 *  	main() function to solve sudoku puzzles from a file
 */
@@ -364,7 +412,8 @@ int main()
 	int backtracksCount;	// # of backtracks involved for each board
 	int boardCount = 0; 	// # of Boards from file solved
 	int boardSize = 9;
-
+	string unsolved_file = "Sudoku1.txt";
+	
 	// Create SudokuBoard object
     SudokuBoard *sdk = new SudokuBoard(boardSize);
 	
